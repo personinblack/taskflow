@@ -1,5 +1,7 @@
 package me.blackness.taskflow.taskflow;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -42,7 +44,8 @@ public final class BasicTaskFlow<T> implements TaskFlow<T> {
     private final Queue<T> tsQueue;
 
     private BukkitTask bukkitTask;
-    private Task<T> currentTask;
+
+    private final List<Task<T>> startedTasks;
 
     private CountDownLatch finishSignal;
 
@@ -53,6 +56,8 @@ public final class BasicTaskFlow<T> implements TaskFlow<T> {
         tasksQueue = new LinkedBlockingQueue<>();
         tsQueue = new LinkedBlockingQueue<>();
         shutdownHandler.register(plugin);
+
+        startedTasks = new ArrayList<>();
 
         finishSignal = new CountDownLatch(1);
     }
@@ -72,7 +77,9 @@ public final class BasicTaskFlow<T> implements TaskFlow<T> {
         if (!isRunning()) {
             bukkitTask = Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 while (!tsQueue.isEmpty()) {
+                    final Task<T> currentTask;
                     (currentTask = tasksQueue.poll()).execute(tsQueue.poll(), plugin);
+                    startedTasks.add(currentTask);
                 }
 
                 finishSignal.countDown();
@@ -82,8 +89,8 @@ public final class BasicTaskFlow<T> implements TaskFlow<T> {
     }
 
     public void stop() {
-        if (currentTask != null) {
-            currentTask.cancel();
+        for (Task<T> task : startedTasks) {
+            task.cancel();
         }
 
         if (isRunning()) {
@@ -91,6 +98,7 @@ public final class BasicTaskFlow<T> implements TaskFlow<T> {
 
             if (!isRunning() && finishSignal != null) {
                 finishSignal.countDown();
+                startedTasks.clear();
             }
         }
     }
@@ -99,6 +107,12 @@ public final class BasicTaskFlow<T> implements TaskFlow<T> {
     public boolean isRunning() {
         if (bukkitTask == null) {
             return false;
+        }
+
+        for (Task<T> task : startedTasks) {
+            if (task.isRunning()) {
+                return true;
+            }
         }
 
         final BukkitScheduler scheduler = Bukkit.getScheduler();

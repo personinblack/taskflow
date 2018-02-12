@@ -101,4 +101,9 @@ public final class RepeatingAsyncTask<T, U> implements Task<T> {
             lock.unlock();
         }
     }
+
+    @Override
+    public boolean isRunning() {
+        return bukkitTask != null && !bukkitTask.isCancelled();
+    }
 }

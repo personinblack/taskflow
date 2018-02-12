@@ -82,4 +82,9 @@ public final class SyncTask<T> implements Task<T> {
             lock.unlock();
         }
     }
+
+    @Override
+    public boolean isRunning() {
+        return bukkitTask != null && !bukkitTask.isCancelled();
+    }
 }

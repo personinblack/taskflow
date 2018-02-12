@@ -85,4 +85,9 @@ public final class FlowingAsyncTask<T, U> implements Task<T> {
             lock.unlock();
         }
     }
+
+    @Override
+    public boolean isRunning() {
+        return bukkitTask != null && !bukkitTask.isCancelled();
+    }
 }

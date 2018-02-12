@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 group = 'me.blackness.taskflow'
-version = '1.0.3'
+version = '1.0.4'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'

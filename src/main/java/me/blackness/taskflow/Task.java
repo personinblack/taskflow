@@ -24,4 +24,5 @@ import org.bukkit.plugin.Plugin;
 public interface Task<T> {
     boolean execute(T t, Plugin plugin);
     void cancel();
+    boolean isRunning();
 }

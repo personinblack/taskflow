@@ -71,4 +71,9 @@ public final class VerifierTask<T> implements Task<T> {
             lock.unlock();
         }
     }
+
+    @Override
+    public boolean isRunning() {
+        return false;
+    }
 }
