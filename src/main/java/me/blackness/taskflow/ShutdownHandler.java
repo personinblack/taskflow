@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.scheduler.BukkitWorker;
@@ -48,7 +49,11 @@ public final class ShutdownHandler implements Listener {
             }
         }
 
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+        try {
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+        } catch (IllegalPluginAccessException ex) {
+            return;
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

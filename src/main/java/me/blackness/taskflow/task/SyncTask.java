@@ -2,7 +2,7 @@ package me.blackness.taskflow.task;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -29,15 +29,17 @@ import me.blackness.taskflow.Task;
                                                         i"  personinblack
                                                         |
  */
-public final class SyncTask<T> implements Task<T> {
-    private final Consumer<T> task;
+public final class SyncTask<T, U> implements Task<T> {
+    private final Function<T, U> task;
+    private final Task<U> baseTask;
 
     private final ReentrantLock lock;
 
     private BukkitTask bukkitTask;
 
-    public SyncTask(Consumer<T> task) {
+    public SyncTask(Function<T, U> task, Task<U> baseTask) {
         this.task = task;
+        this.baseTask = baseTask;
 
         lock = new ReentrantLock(true);
     }
@@ -50,30 +52,32 @@ public final class SyncTask<T> implements Task<T> {
 
         lock.lock();
 
-        final CompletableFuture<Void> future = new CompletableFuture<>();
+        final CompletableFuture<U> future = new CompletableFuture<>();
 
         bukkitTask = new BukkitRunnable(){
 
             @Override
             public void run() {
-                task.accept(t);
-                future.complete(null);
+                future.complete(task.apply(t));
             }
         }.runTask(plugin);
 
         try {
-            future.get();
+            baseTask.execute(future.get(), plugin);
         } catch (Exception ex) {
             lock.unlock();
             return false;
         }
 
         lock.unlock();
+
         return true;
     }
 
     @Override
     public void cancel() {
+        baseTask.cancel();
+
         if (bukkitTask != null && !bukkitTask.isCancelled()) {
             bukkitTask.cancel();
         }
